@@ -1,0 +1,4 @@
+git subtree add --prefix framework https://github.com/rjobling/Framework main --squash
+git subtree pull --prefix framework https://github.com/rjobling/Framework main --squash
+git subtree push --prefix framework https://github.com/rjobling/Framework main
+git reset --hard
