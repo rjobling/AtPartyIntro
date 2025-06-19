@@ -12,6 +12,9 @@
 #include "framework/lsp.h"
 #include "framework/system.h"
 
+#define TEST_COPLIST_BPLMOD
+#define TEST_COPLIST_CHANGES
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 static constexpr int kViewWidth	 = 320;
@@ -51,8 +54,10 @@ struct CopList
 	CopCommand topcolor2 = CopMove(color[2], ((const u16*) gPalettes)[2]);
 	CopCommand topcolor3 = CopMove(color[3], ((const u16*) gPalettes)[3]);
 
+	#if defined(TEST_COPLIST_BPLMOD)
 	CopCommand topbpl1mod = CopMove(bpl1mod, 0);
 	CopCommand topbpl2mod = CopMove(bpl2mod, 0);
+	#endif
 
 	CopCommand midwait = CopWait(4, 44 + 192);
 
@@ -61,8 +66,10 @@ struct CopList
 	CopCommand midcolor2 = CopMove(color[2], ~((const u16*) gPalettes)[2]);
 	CopCommand midcolor3 = CopMove(color[3], ~((const u16*) gPalettes)[3]);
 
+	#if defined(TEST_COPLIST_BPLMOD)
 	CopCommand midbpl1mod = CopMove(bpl1mod, -kImagePitch * 3);
 	CopCommand midbpl2mod = CopMove(bpl2mod, -kImagePitch * 3);
+	#endif
 
 	CopCommand end = CopEnd();
 };
@@ -86,6 +93,9 @@ bool Intro_Init()
 	custom.diwstop = PackDiwstop(kViewWidth, kViewHeight);
 	custom.ddfstrt = PackDdfstrt(0);
 	custom.ddfstop = PackDdfstop(kViewWidth);
+
+	custom.bpl1mod = 0;
+	custom.bpl2mod = 0;
 
 	debug_register_bitmap(gImageBpls, "ImageBpls", kImageWidth, kImageHeight, kImagePlanes, 0);
 	debug_register_palette(gPalettes, "Palette", kPaletteSize, 0);
@@ -140,6 +150,8 @@ bool Intro_Update()
 	custom.bplpt[0] = (void*) (bpls + kImagePlaneSize * 0);
 	custom.bplpt[1] = (void*) (bpls + kImagePlaneSize * 1);
 
+	#if defined(TEST_COPLIST_CHANGES)
+
 	int palIndex = (sFrame >> 1) & (kPaletteCount - 1);
 	const u16* pal = &((const u16*) gPalettes)[palIndex * kPaletteSize];
 
@@ -151,6 +163,8 @@ bool Intro_Update()
 	sCopList.midcolor1.data = ~pal[1];
 	sCopList.midcolor2.data = ~pal[2];
 	sCopList.midcolor3.data = ~pal[3];
+
+	#endif
 
 	sFrame++;
 
