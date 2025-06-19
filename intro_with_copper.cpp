@@ -136,10 +136,10 @@ bool Intro_Update()
 {
 	System_WaitVbl();
 
-	int scroll = (16384 - cos(sFrame << 9)) >> 9;
-	int offset = scroll * kImagePitch;
+	const u8* bpls = (const u8*) gImageBpls;
 
-	const u8* bpls = ((const u8*) gImageBpls) + offset;
+	int scroll = (16384 - cos(sFrame << 9)) >> 9;
+	bpls += scroll * kImagePitch;
 
 	custom.bplpt[0] = (void*) (bpls + kImagePlaneSize * 0);
 	custom.bplpt[1] = (void*) (bpls + kImagePlaneSize * 1);
