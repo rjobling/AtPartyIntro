@@ -23,43 +23,50 @@ static constexpr int kImageWidth	 = 320;
 static constexpr int kImageHeight	 = 320;
 static constexpr int kImagePlanes	 = 2;
 static constexpr int kImagePlaneSize = (kImageWidth / 8) * kImageHeight;
-static constexpr int kImagePitch	 = (kImageWidth / 8) * kImagePlanes;
+static constexpr int kImagePitch	 = kImageWidth / 8;
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+static constexpr int kPaletteSize  = 1 << kImagePlanes;
+static constexpr int kPaletteCount = 128;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 INCBIN_CHIP(gImageBpls, "data/image_bpls.bin");
-INCBIN(gImagePal, "data/image_pal.bin");
+INCBIN(gPalettes, "data/palettes.bin");
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-INCBIN_CHIP(gLSPMusic, "data/statetrue.lsmusic");
+INCBIN(gLSPMusic, "data/statetrue.lsmusic");
 INCBIN_CHIP(gLSPBank, "data/statetrue.lsbank");
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 struct CopList
 {
-	CopCommand topcolor[1 << kImagePlanes] = {
-		CopMove(color[0], ((const u16*) gImagePal)[0]),
-		CopMove(color[1], ((const u16*) gImagePal)[1]),
-		CopMove(color[2], ((const u16*) gImagePal)[2]),
-		CopMove(color[3], ((const u16*) gImagePal)[3]),
+	CopCommand topwait = CopWait(0, 20);
+
+	CopCommand topcolor[kPaletteSize] = {
+		CopMove(color[0], ((const u16*) gPalettes)[0]),
+		CopMove(color[1], ((const u16*) gPalettes)[1]),
+		CopMove(color[2], ((const u16*) gPalettes)[2]),
+		CopMove(color[3], ((const u16*) gPalettes)[3]),
 	};
 
 	CopCommand topbpl1mod = CopMove(bpl1mod, 0);
 	CopCommand topbpl2mod = CopMove(bpl2mod, 0);
 
-	CopCommand midwait = CopWait(0, 44 + 192);
+	CopCommand midwait = CopWait(4, 44 + 192);
 
-	CopCommand midcolor[1 << kImagePlanes] = {
-		CopMove(color[0], ~((const u16*) gImagePal)[0]),
-		CopMove(color[1], ~((const u16*) gImagePal)[1]),
-		CopMove(color[2], ~((const u16*) gImagePal)[2]),
-		CopMove(color[3], ~((const u16*) gImagePal)[3]),
+	CopCommand midcolor[kPaletteSize] = {
+		CopMove(color[0], ~((const u16*) gPalettes)[0]),
+		CopMove(color[1], ~((const u16*) gPalettes)[1]),
+		CopMove(color[2], ~((const u16*) gPalettes)[2]),
+		CopMove(color[3], ~((const u16*) gPalettes)[3]),
 	};
 
-	CopCommand midbpl1mod = CopMove(bpl1mod, -kImagePitch * 2);
-	CopCommand midbpl2mod = CopMove(bpl2mod, -kImagePitch * 2);
+	CopCommand midbpl1mod = CopMove(bpl1mod, -kImagePitch * 3);
+	CopCommand midbpl2mod = CopMove(bpl2mod, -kImagePitch * 3);
 
 	CopCommand end = CopEnd();
 };
@@ -70,25 +77,7 @@ static CopList sCopList __attribute__((section(".MEMF_CHIP")));
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-struct Intro_Data
-{
-	////////////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////
-	int frame = 0;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-static Intro_Data sData;
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-#if defined(DEBUG)
-static constexpr u16 kDebugPalette[] = {
-	0x123, 0x800, 0x830, 0x860, 0x880, 0x480, 0x080, 0x088, 0x068, 0x048, 0x028, 0x008, 0x308, 0x608, 0x808, 0x804,
-	0x246, 0xf00, 0xf50, 0xfa0, 0xff0, 0x8f0, 0x0f0, 0x0ff, 0x0cf, 0x08f, 0x04f, 0x00f, 0x50f, 0xa0f, 0xf0f, 0xf08,
-};
-#endif
+static int sFrame = 0;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -103,8 +92,7 @@ bool Intro_Init()
 	custom.ddfstop = PackDdfstop(kViewWidth);
 
 	debug_register_bitmap(gImageBpls, "ImageBpls", kImageWidth, kImageHeight, kImagePlanes, 0);
-	debug_register_palette(gImagePal, "ImagePal", 1 << kImagePlanes, 0);
-	debug_register_palette(kDebugPalette, "Debug", countof(kDebugPalette), 0);
+	debug_register_palette(gPalettes, "Palette", kPaletteSize, 0);
 
 	LSP_MusicDriver_CIA_Start(gLSPMusic, gLSPBank);
 	System_SetAudioFilter(false);
@@ -119,7 +107,7 @@ bool Intro_Init()
 	System_WaitVbl();
 
 	// Enable DMA which will start the copper.
-	custom.dmacon = DMAF_SETCLR | DMAF_MASTER | DMAF_RASTER | DMAF_COPPER | DMAF_BLITTER;
+	custom.dmacon = DMAF_SETCLR | DMAF_MASTER | DMAF_RASTER | DMAF_COPPER;
 
 	// Enable interrupts when still nearly at the top of the frame.
 	custom.intena = INTF_SETCLR | INTF_INTEN;
@@ -134,13 +122,12 @@ void Intro_Deinit()
 	System_WaitVbl();
 
 	// Disable DMA which will stop the copper.
-	custom.dmacon = DMAF_RASTER | DMAF_COPPER | DMAF_BLITTER | DMAF_BLITHOG;
+	custom.dmacon = DMAF_RASTER | DMAF_COPPER;
 
 	LSP_MusicDriver_CIA_Stop();
 
-	debug_unregister(kDebugPalette);
 	debug_unregister(gImageBpls);
-	debug_unregister(gImagePal);
+	debug_unregister(gPalettes);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -149,7 +136,7 @@ bool Intro_Update()
 {
 	System_WaitVbl();
 
-	int scroll = (16384 - cos(sData.frame << 9)) >> 9;
+	int scroll = (16384 - cos(sFrame << 9)) >> 9;
 	int offset = scroll * kImagePitch;
 
 	const u8* bpls = ((const u8*) gImageBpls) + offset;
@@ -157,7 +144,19 @@ bool Intro_Update()
 	custom.bplpt[0] = (void*) (bpls + kImagePlaneSize * 0);
 	custom.bplpt[1] = (void*) (bpls + kImagePlaneSize * 1);
 
-	sData.frame++;
+	int palIndex = (sFrame >> 1) & (kPaletteCount - 1);
+	const u16* pal = &((const u16*) gPalettes)[palIndex * kPaletteSize];
+
+	sCopList.topcolor[0].data = pal[0];
+	sCopList.topcolor[1].data = pal[1];
+	sCopList.topcolor[2].data = pal[2];
+	sCopList.topcolor[3].data = pal[3];
+	sCopList.midcolor[0].data = ~pal[0];
+	sCopList.midcolor[1].data = ~pal[1];
+	sCopList.midcolor[2].data = ~pal[2];
+	sCopList.midcolor[3].data = ~pal[3];
+
+	sFrame++;
 
 	return !System_TestLMB1();
 }
