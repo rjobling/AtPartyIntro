@@ -63,6 +63,9 @@ bool Intro_Init()
 	custom.ddfstrt = PackDdfstrt(0);
 	custom.ddfstop = PackDdfstop(kViewWidth);
 
+	custom.bpl1mod = 0;
+	custom.bpl2mod = 0;
+
 	custom.color[0] = 0xfa4;
 	custom.color[1] = 0x555;
 	custom.color[2] = 0xf65;
