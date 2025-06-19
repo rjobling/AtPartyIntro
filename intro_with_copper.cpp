@@ -46,24 +46,20 @@ struct CopList
 {
 	CopCommand topwait = CopWait(0, 20);
 
-	CopCommand topcolor[kPaletteSize] = {
-		CopMove(color[0], ((const u16*) gPalettes)[0]),
-		CopMove(color[1], ((const u16*) gPalettes)[1]),
-		CopMove(color[2], ((const u16*) gPalettes)[2]),
-		CopMove(color[3], ((const u16*) gPalettes)[3]),
-	};
+	CopCommand topcolor0 = CopMove(color[0], ((const u16*) gPalettes)[0]);
+	CopCommand topcolor1 = CopMove(color[1], ((const u16*) gPalettes)[1]);
+	CopCommand topcolor2 = CopMove(color[2], ((const u16*) gPalettes)[2]);
+	CopCommand topcolor3 = CopMove(color[3], ((const u16*) gPalettes)[3]);
 
 	CopCommand topbpl1mod = CopMove(bpl1mod, 0);
 	CopCommand topbpl2mod = CopMove(bpl2mod, 0);
 
 	CopCommand midwait = CopWait(4, 44 + 192);
 
-	CopCommand midcolor[kPaletteSize] = {
-		CopMove(color[0], ~((const u16*) gPalettes)[0]),
-		CopMove(color[1], ~((const u16*) gPalettes)[1]),
-		CopMove(color[2], ~((const u16*) gPalettes)[2]),
-		CopMove(color[3], ~((const u16*) gPalettes)[3]),
-	};
+	CopCommand midcolor0 = CopMove(color[0], ~((const u16*) gPalettes)[0]);
+	CopCommand midcolor1 = CopMove(color[1], ~((const u16*) gPalettes)[1]);
+	CopCommand midcolor2 = CopMove(color[2], ~((const u16*) gPalettes)[2]);
+	CopCommand midcolor3 = CopMove(color[3], ~((const u16*) gPalettes)[3]);
 
 	CopCommand midbpl1mod = CopMove(bpl1mod, -kImagePitch * 3);
 	CopCommand midbpl2mod = CopMove(bpl2mod, -kImagePitch * 3);
@@ -147,14 +143,14 @@ bool Intro_Update()
 	int palIndex = (sFrame >> 1) & (kPaletteCount - 1);
 	const u16* pal = &((const u16*) gPalettes)[palIndex * kPaletteSize];
 
-	sCopList.topcolor[0].data = pal[0];
-	sCopList.topcolor[1].data = pal[1];
-	sCopList.topcolor[2].data = pal[2];
-	sCopList.topcolor[3].data = pal[3];
-	sCopList.midcolor[0].data = ~pal[0];
-	sCopList.midcolor[1].data = ~pal[1];
-	sCopList.midcolor[2].data = ~pal[2];
-	sCopList.midcolor[3].data = ~pal[3];
+	sCopList.topcolor0.data = pal[0];
+	sCopList.topcolor1.data = pal[1];
+	sCopList.topcolor2.data = pal[2];
+	sCopList.topcolor3.data = pal[3];
+	sCopList.midcolor0.data = ~pal[0];
+	sCopList.midcolor1.data = ~pal[1];
+	sCopList.midcolor2.data = ~pal[2];
+	sCopList.midcolor3.data = ~pal[3];
 
 	sFrame++;
 
