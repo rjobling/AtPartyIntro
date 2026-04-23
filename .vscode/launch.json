@@ -5,7 +5,6 @@
             "type": "amiga",
             "request": "launch",
             "preLaunchTask": "compile",
-            "linux": { "preLaunchTask": ""},
             "name": "AROS",
             "config": "A500",
             "program": "${workspaceFolder}/out/atpartyintro",
@@ -15,11 +14,9 @@
             "type": "amiga",
             "request": "launch",
             "preLaunchTask": "compile",
-            "linux": { "preLaunchTask": ""},
             "name": "Amiga 500",
             "config": "A500",
             "program": "${workspaceFolder}/out/atpartyintro",
-            "uaelog": false,
             "kickstart": "${config:amiga.rom-paths.A500}",
             "internalConsoleOptions": "openOnSessionStart"
         },
@@ -27,11 +24,9 @@
             "type": "amiga",
             "request": "launch",
             "preLaunchTask": "compile",
-            "linux": { "preLaunchTask": ""},
             "name": "Amiga 1200",
             "config": "A1200",
             "program": "${workspaceFolder}/out/atpartyintro",
-            "uaelog": false,
             "kickstart": "${config:amiga.rom-paths.A1200}",
             "internalConsoleOptions": "openOnSessionStart"
         },
@@ -39,13 +34,11 @@
             "type": "amiga",
             "request": "launch",
             "preLaunchTask": "compile",
-            "linux": { "preLaunchTask": ""},
             "name": "Amiga 4000",
             "config": "A4000",
             "program": "${workspaceFolder}/out/atpartyintro",
-            "uaelog": false,
             "kickstart": "${config:amiga.rom-paths.A4000}",
             "internalConsoleOptions": "openOnSessionStart"
-        }
+        }        
     ]
 }
