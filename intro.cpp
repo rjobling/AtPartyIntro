@@ -51,7 +51,7 @@ static constexpr int kBobsPitch		= kBobsWidth / 8;
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 static constexpr int kBufferWidth	  = 320;
-static constexpr int kBufferHeight	  = 320;
+static constexpr int kBufferHeight	  = 256;
 static constexpr int kBufferPlanes	  = 2;
 static constexpr int kBufferPlaneSize = (kBufferWidth / 8) * kBufferHeight;
 static constexpr int kBufferPitch	  = kBufferWidth / 8;
@@ -79,7 +79,7 @@ INCBIN_CHIP(gMasksBpls, "data/masks_bpls.bin");
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-static u8 sBufferBpls[kBufferSize][2] __attribute__((section(".MEMF_CHIP")));
+static u16 sBufferBpls[2][kBufferSize / 2] __attribute__((section(".MEMF_CHIP")));
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -141,14 +141,14 @@ struct CopList
 		CopCommand bplpth[kImagePlanes + kBufferPlanes] = {
 			CopMoveH(bplpt[0], (const u8*) gImageBpls + kImagePlaneSize * 0),
 			CopMoveH(bplpt[1], (const u8*) gImageBpls + kImagePlaneSize * 1),
-			CopMoveH(bplpt[2], sBufferBpls[0] + kBufferPlaneSize * 0),
-			CopMoveH(bplpt[3], sBufferBpls[0] + kBufferPlaneSize * 1),
+			CopMoveH(bplpt[2], sBufferBpls[0] + kBufferPlaneSize / 2 * 0),
+			CopMoveH(bplpt[3], sBufferBpls[0] + kBufferPlaneSize / 2 * 1),
 		};
 		CopCommand bplptl[kImagePlanes + kBufferPlanes] = {
 			CopMoveL(bplpt[0], (const u8*) gImageBpls + kImagePlaneSize * 0),
 			CopMoveL(bplpt[1], (const u8*) gImageBpls + kImagePlaneSize * 1),
-			CopMoveL(bplpt[2], sBufferBpls[0] + kBufferPlaneSize * 0),
-			CopMoveL(bplpt[3], sBufferBpls[0] + kBufferPlaneSize * 1),
+			CopMoveL(bplpt[2], sBufferBpls[0] + kBufferPlaneSize / 2 * 0),
+			CopMoveL(bplpt[3], sBufferBpls[0] + kBufferPlaneSize / 2 * 1),
 		};
 
 		CopCommand topcolors[1 << (kImagePlanes + kBufferPlanes)] = {
@@ -194,17 +194,18 @@ static CopList sCopList __attribute__((section(".MEMF_CHIP")));
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+static u16* sFrontBpls = sBufferBpls[0];
+static u16* sBackBpls  = sBufferBpls[1];
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 static int sFrame = 0;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 bool Intro_Init()
 {
-	Font_Init((u16*) gImageBpls, (u16*) gImageBpls + kImagePlaneSize / 2, kImagePitch, (const u16*) gFontBpls);
-
-	const char* message = "Demo Lab!fWPI 2026!";
-	message = Font_DrawMessage(message, 10, 12);
-	message = Font_DrawMessage(message, 20, 14);
+	Font_Init(sBackBpls, sBackBpls + kBufferPlaneSize / 2, kBufferPitch, (const u16*) gFontBpls);
 
 	Palette_InitBlendTable();
 
@@ -285,13 +286,13 @@ bool Intro_Update()
 
 	int scroll = (16384 - cos(sFrame << 9)) >> 8;
 
-	const u8* bpl0 = (const u8*) gImageBpls + scroll * kImagePitch;
-	const u8* bpl1 = bpl0 + kImagePlaneSize;
+	const u8* imageBpl0 = (const u8*) gImageBpls + scroll * kImagePitch;
+	const u8* imageBpl1 = imageBpl0 + kImagePlaneSize;
 
-	sCopList.image.bplpth[0].data = ((int) bpl0) >> 16;
-	sCopList.image.bplptl[0].data = ((int) bpl0) & 0xffff;
-	sCopList.image.bplpth[1].data = ((int) bpl1) >> 16;
-	sCopList.image.bplptl[1].data = ((int) bpl1) & 0xffff;
+	sCopList.image.bplpth[0].data = ((int) imageBpl0) >> 16;
+	sCopList.image.bplptl[0].data = ((int) imageBpl0) & 0xffff;
+	sCopList.image.bplpth[1].data = ((int) imageBpl1) >> 16;
+	sCopList.image.bplptl[1].data = ((int) imageBpl1) & 0xffff;
 
 	int palIndex = (sFrame >> 1) & (kPaletteCount - 1);
 	const u16* pal = &((const u16*) gPalettes)[palIndex * kPaletteSize];
@@ -304,6 +305,21 @@ bool Intro_Update()
 	sCopList.image.midcolors[1].data = ~pal[1];
 	sCopList.image.midcolors[2].data = ~pal[2];
 	sCopList.image.midcolors[3].data = ~pal[3];
+
+	u8* bufferBpl0 = (u8*) sFrontBpls;
+	u8* bufferBpl1 = bufferBpl0 + kBufferPlaneSize;
+
+	sCopList.image.bplpth[2].data = ((int) bufferBpl0) >> 16;
+	sCopList.image.bplptl[2].data = ((int) bufferBpl0) & 0xffff;
+	sCopList.image.bplpth[3].data = ((int) bufferBpl1) >> 16;
+	sCopList.image.bplptl[3].data = ((int) bufferBpl1) & 0xffff;
+
+	Font_SetBpls(sBackBpls, sBackBpls + kBufferPlaneSize / 2);
+
+	Font_DrawMessage("Demo Lab!", 13, 7);
+	Font_DrawMessage("WPI 2026!", 17, 9);
+
+	swap(sFrontBpls, sBackBpls);
 
 	sFrame++;
 
