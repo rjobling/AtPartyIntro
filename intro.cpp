@@ -50,6 +50,15 @@ static constexpr int kBobsPitch		= kBobsWidth / 8;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+static constexpr int kBufferWidth	  = 320;
+static constexpr int kBufferHeight	  = 320;
+static constexpr int kBufferPlanes	  = 2;
+static constexpr int kBufferPlaneSize = (kBufferWidth / 8) * kBufferHeight;
+static constexpr int kBufferPitch	  = kBufferWidth / 8;
+static constexpr int kBufferSize	  = kBufferPlaneSize * kBufferPlanes;
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 INCBIN(gFontBpls, "data/font_bpls.bin");
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -70,6 +79,10 @@ INCBIN_CHIP(gMasksBpls, "data/masks_bpls.bin");
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+static u8 sBufferBpls[kBufferSize][2] __attribute__((section(".MEMF_CHIP")));
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 INCBIN(gLSPMusic, "data/cosmic_makeup.lsmusic");
 INCBIN_CHIP(gLSPBank, "data/cosmic_makeup.lsbank");
 
@@ -82,6 +95,19 @@ struct CopList
 		CopCommand bplcon0 = CopMove(bplcon0, PackBplcon0(kLogoPlanes));
 		CopCommand bpl1mod = CopMove(bpl1mod, 0);
 		CopCommand bpl2mod = CopMove(bpl2mod, 0);
+
+		CopCommand bplpth[kLogoPlanes] = {
+			CopMoveH(bplpt[0], (const u8*) gLogoBpls + kLogoPlaneSize * 0),
+			CopMoveH(bplpt[1], (const u8*) gLogoBpls + kLogoPlaneSize * 1),
+			CopMoveH(bplpt[2], (const u8*) gLogoBpls + kLogoPlaneSize * 2),
+			CopMoveH(bplpt[3], (const u8*) gLogoBpls + kLogoPlaneSize * 3),
+		};
+		CopCommand bplptl[kLogoPlanes] = {
+			CopMoveL(bplpt[0], (const u8*) gLogoBpls + kLogoPlaneSize * 0),
+			CopMoveL(bplpt[1], (const u8*) gLogoBpls + kLogoPlaneSize * 1),
+			CopMoveL(bplpt[2], (const u8*) gLogoBpls + kLogoPlaneSize * 2),
+			CopMoveL(bplpt[3], (const u8*) gLogoBpls + kLogoPlaneSize * 3),
+		};
 
 		CopCommand colors[1 << kLogoPlanes] = {
 			CopMove(color[ 0], ((const u16*) gLogoPal)[ 0]),
@@ -101,19 +127,6 @@ struct CopList
 			CopMove(color[14], ((const u16*) gLogoPal)[14]),
 			CopMove(color[15], ((const u16*) gLogoPal)[15]),
 		};
-
-		CopCommand bplpth[kLogoPlanes] = {
-			CopMoveH(bplpt[0], (const u8*) gLogoBpls + kLogoPlaneSize * 0),
-			CopMoveH(bplpt[1], (const u8*) gLogoBpls + kLogoPlaneSize * 1),
-			CopMoveH(bplpt[2], (const u8*) gLogoBpls + kLogoPlaneSize * 2),
-			CopMoveH(bplpt[3], (const u8*) gLogoBpls + kLogoPlaneSize * 3),
-		};
-		CopCommand bplptl[kLogoPlanes] = {
-			CopMoveL(bplpt[0], (const u8*) gLogoBpls + kLogoPlaneSize * 0),
-			CopMoveL(bplpt[1], (const u8*) gLogoBpls + kLogoPlaneSize * 1),
-			CopMoveL(bplpt[2], (const u8*) gLogoBpls + kLogoPlaneSize * 2),
-			CopMoveL(bplpt[3], (const u8*) gLogoBpls + kLogoPlaneSize * 3),
-		};
 	}
 	logo;
 
@@ -121,24 +134,40 @@ struct CopList
 	{
 		CopCommand topwait = CopWait(0, 44 + kLogoHeight);
 
-		CopCommand bplcon0 = CopMove(bplcon0, PackBplcon0(kImagePlanes));
+		CopCommand bplcon0 = CopMove(bplcon0, PackBplcon0(kImagePlanes + kBufferPlanes));
 		CopCommand bpl1mod = CopMove(bpl1mod, 0);
 		CopCommand bpl2mod = CopMove(bpl2mod, 0);
 
-		CopCommand topcolors[1 << kImagePlanes] = {
-			CopMove(color[0], ((const u16*) gPalettes)[0]),
-			CopMove(color[1], ((const u16*) gPalettes)[1]),
-			CopMove(color[2], ((const u16*) gPalettes)[2]),
-			CopMove(color[3], ((const u16*) gPalettes)[3]),
-		};
-
-		CopCommand bplpth[kImagePlanes] = {
+		CopCommand bplpth[kImagePlanes + kBufferPlanes] = {
 			CopMoveH(bplpt[0], (const u8*) gImageBpls + kImagePlaneSize * 0),
 			CopMoveH(bplpt[1], (const u8*) gImageBpls + kImagePlaneSize * 1),
+			CopMoveH(bplpt[2], sBufferBpls[0] + kBufferPlaneSize * 0),
+			CopMoveH(bplpt[3], sBufferBpls[0] + kBufferPlaneSize * 1),
 		};
-		CopCommand bplptl[kImagePlanes] = {
+		CopCommand bplptl[kImagePlanes + kBufferPlanes] = {
 			CopMoveL(bplpt[0], (const u8*) gImageBpls + kImagePlaneSize * 0),
 			CopMoveL(bplpt[1], (const u8*) gImageBpls + kImagePlaneSize * 1),
+			CopMoveL(bplpt[2], sBufferBpls[0] + kBufferPlaneSize * 0),
+			CopMoveL(bplpt[3], sBufferBpls[0] + kBufferPlaneSize * 1),
+		};
+
+		CopCommand topcolors[1 << (kImagePlanes + kBufferPlanes)] = {
+			CopMove(color[ 0], ((const u16*) gPalettes)[0]),
+			CopMove(color[ 1], ((const u16*) gPalettes)[1]),
+			CopMove(color[ 2], ((const u16*) gPalettes)[2]),
+			CopMove(color[ 3], ((const u16*) gPalettes)[3]),
+			CopMove(color[ 4], ((const u16*) gBobsPal)[1]),
+			CopMove(color[ 5], ((const u16*) gBobsPal)[1]),
+			CopMove(color[ 6], ((const u16*) gBobsPal)[1]),
+			CopMove(color[ 7], ((const u16*) gBobsPal)[1]),
+			CopMove(color[ 8], ((const u16*) gBobsPal)[2]),
+			CopMove(color[ 9], ((const u16*) gBobsPal)[2]),
+			CopMove(color[10], ((const u16*) gBobsPal)[2]),
+			CopMove(color[11], ((const u16*) gBobsPal)[2]),
+			CopMove(color[12], ((const u16*) gBobsPal)[3]),
+			CopMove(color[13], ((const u16*) gBobsPal)[3]),
+			CopMove(color[14], ((const u16*) gBobsPal)[3]),
+			CopMove(color[15], ((const u16*) gBobsPal)[3]),
 		};
 
 		CopCommand midwait1 = CopWait(4, 255);
@@ -198,6 +227,8 @@ bool Intro_Init()
 	debug_register_bitmap(gBobsBpls, "BobsBpls", kBobsWidth, kBobsHeight, kBobsPlanes, 0);
 	debug_register_palette(gBobsPal, "BobsPal", 1 << kBobsPlanes, 0);
 	debug_register_bitmap(gMasksBpls, "MasksBpls", kBobsWidth, kBobsHeight, 1, 0);
+	debug_register_bitmap(sBufferBpls[0], "BufferBpls0", kBufferWidth, kBufferHeight, kBufferPlanes, 0);
+	debug_register_bitmap(sBufferBpls[1], "BufferBpls1", kBufferWidth, kBufferHeight, kBufferPlanes, 0);
 
 	LSP_MusicDriver_CIA_Start(gLSPMusic, gLSPBank);
 	System_SetAudioFilter(false);
@@ -239,6 +270,8 @@ void Intro_Deinit()
 	debug_unregister(gBobsBpls);
 	debug_unregister(gBobsPal);
 	debug_unregister(gMasksBpls);
+	debug_unregister(sBufferBpls[0]);
+	debug_unregister(sBufferBpls[1]);
 
 	Palette_DeinitBlendTable();
 	Font_Deinit();
