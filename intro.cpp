@@ -301,10 +301,10 @@ bool Intro_Update()
 	sCopList.image.topcolors[1].data = pal[1];
 	sCopList.image.topcolors[2].data = pal[2];
 	sCopList.image.topcolors[3].data = pal[3];
-	sCopList.image.midcolors[0].data = ~pal[0];
-	sCopList.image.midcolors[1].data = ~pal[1];
-	sCopList.image.midcolors[2].data = ~pal[2];
-	sCopList.image.midcolors[3].data = ~pal[3];
+	sCopList.image.midcolors[0].data = ((pal[0] >> 1) & 0x770) | 0x00f;
+	sCopList.image.midcolors[1].data = ((pal[1] >> 1) & 0x770) | 0x00f;
+	sCopList.image.midcolors[2].data = ((pal[2] >> 1) & 0x770) | 0x00f;
+	sCopList.image.midcolors[3].data = ((pal[3] >> 1) & 0x770) | 0x00f;
 
 	u8* bufferBpl0 = (u8*) sFrontBpls;
 	u8* bufferBpl1 = bufferBpl0 + kBufferPlaneSize;
