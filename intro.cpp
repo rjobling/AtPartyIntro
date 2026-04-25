@@ -14,13 +14,18 @@
 #include "framework/palette.h"
 #include "framework/system.h"
 
-#define TEST_COPLIST_BPLMOD
-#define TEST_COPLIST_CHANGES
-
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 static constexpr int kViewWidth	 = 320;
 static constexpr int kViewHeight = 256;
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+static constexpr int kLogoWidth		= 320;
+static constexpr int kLogoHeight	= 48;
+static constexpr int kLogoPlanes	= 4;
+static constexpr int kLogoPlaneSize = (kLogoWidth / 8) * kLogoHeight;
+static constexpr int kLogoPitch		= kLogoWidth / 8;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -41,6 +46,11 @@ INCBIN(gFontBpls, "data/font_bpls.bin");
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+INCBIN_CHIP(gLogoBpls, "data/logo_bpls.bin");
+INCBIN(gLogoPal, "data/logo_pal.bin");
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 INCBIN_CHIP(gImageBpls, "data/image_bpls.bin");
 INCBIN(gPalettes, "data/palettes.bin");
 
@@ -53,29 +63,84 @@ INCBIN_CHIP(gLSPBank, "data/cosmic_makeup.lsbank");
 ////////////////////////////////////////////////////////////////////////////////
 struct CopList
 {
-	CopCommand topwait = CopWait(0, 20);
+	struct
+	{
+		CopCommand bplcon0 = CopMove(bplcon0, PackBplcon0(kLogoPlanes));
+		CopCommand bpl1mod = CopMove(bpl1mod, 0);
+		CopCommand bpl2mod = CopMove(bpl2mod, 0);
 
-	CopCommand topcolor0 = CopMove(color[0], ((const u16*) gPalettes)[0]);
-	CopCommand topcolor1 = CopMove(color[1], ((const u16*) gPalettes)[1]);
-	CopCommand topcolor2 = CopMove(color[2], ((const u16*) gPalettes)[2]);
-	CopCommand topcolor3 = CopMove(color[3], ((const u16*) gPalettes)[3]);
+		CopCommand colors[1 << kLogoPlanes] = {
+			CopMove(color[ 0], ((const u16*) gLogoPal)[ 0]),
+			CopMove(color[ 1], ((const u16*) gLogoPal)[ 1]),
+			CopMove(color[ 2], ((const u16*) gLogoPal)[ 2]),
+			CopMove(color[ 3], ((const u16*) gLogoPal)[ 3]),
+			CopMove(color[ 4], ((const u16*) gLogoPal)[ 4]),
+			CopMove(color[ 5], ((const u16*) gLogoPal)[ 5]),
+			CopMove(color[ 6], ((const u16*) gLogoPal)[ 6]),
+			CopMove(color[ 7], ((const u16*) gLogoPal)[ 7]),
+			CopMove(color[ 8], ((const u16*) gLogoPal)[ 8]),
+			CopMove(color[ 9], ((const u16*) gLogoPal)[ 9]),
+			CopMove(color[10], ((const u16*) gLogoPal)[10]),
+			CopMove(color[11], ((const u16*) gLogoPal)[11]),
+			CopMove(color[12], ((const u16*) gLogoPal)[12]),
+			CopMove(color[13], ((const u16*) gLogoPal)[13]),
+			CopMove(color[14], ((const u16*) gLogoPal)[14]),
+			CopMove(color[15], ((const u16*) gLogoPal)[15]),
+		};
 
-	#if defined(TEST_COPLIST_BPLMOD)
-	CopCommand topbpl1mod = CopMove(bpl1mod, 0);
-	CopCommand topbpl2mod = CopMove(bpl2mod, 0);
-	#endif
+		CopCommand bplpth[kLogoPlanes] = {
+			CopMoveH(bplpt[0], (const u8*) gLogoBpls + kLogoPlaneSize * 0),
+			CopMoveH(bplpt[1], (const u8*) gLogoBpls + kLogoPlaneSize * 1),
+			CopMoveH(bplpt[2], (const u8*) gLogoBpls + kLogoPlaneSize * 2),
+			CopMoveH(bplpt[3], (const u8*) gLogoBpls + kLogoPlaneSize * 3),
+		};
+		CopCommand bplptl[kLogoPlanes] = {
+			CopMoveL(bplpt[0], (const u8*) gLogoBpls + kLogoPlaneSize * 0),
+			CopMoveL(bplpt[1], (const u8*) gLogoBpls + kLogoPlaneSize * 1),
+			CopMoveL(bplpt[2], (const u8*) gLogoBpls + kLogoPlaneSize * 2),
+			CopMoveL(bplpt[3], (const u8*) gLogoBpls + kLogoPlaneSize * 3),
+		};
+	}
+	logo;
 
-	CopCommand midwait = CopWait(4, 44 + 192);
+	struct
+	{
+		CopCommand topwait = CopWait(0, 44 + kLogoHeight);
 
-	CopCommand midcolor0 = CopMove(color[0], ~((const u16*) gPalettes)[0]);
-	CopCommand midcolor1 = CopMove(color[1], ~((const u16*) gPalettes)[1]);
-	CopCommand midcolor2 = CopMove(color[2], ~((const u16*) gPalettes)[2]);
-	CopCommand midcolor3 = CopMove(color[3], ~((const u16*) gPalettes)[3]);
+		CopCommand bplcon0 = CopMove(bplcon0, PackBplcon0(kImagePlanes));
+		CopCommand bpl1mod = CopMove(bpl1mod, 0);
+		CopCommand bpl2mod = CopMove(bpl2mod, 0);
 
-	#if defined(TEST_COPLIST_BPLMOD)
-	CopCommand midbpl1mod = CopMove(bpl1mod, -kImagePitch * 3);
-	CopCommand midbpl2mod = CopMove(bpl2mod, -kImagePitch * 3);
-	#endif
+		CopCommand topcolors[1 << kImagePlanes] = {
+			CopMove(color[0], ((const u16*) gPalettes)[0]),
+			CopMove(color[1], ((const u16*) gPalettes)[1]),
+			CopMove(color[2], ((const u16*) gPalettes)[2]),
+			CopMove(color[3], ((const u16*) gPalettes)[3]),
+		};
+
+		CopCommand bplpth[kImagePlanes] = {
+			CopMoveH(bplpt[0], (const u8*) gImageBpls + kImagePlaneSize * 0),
+			CopMoveH(bplpt[1], (const u8*) gImageBpls + kImagePlaneSize * 1),
+		};
+		CopCommand bplptl[kImagePlanes] = {
+			CopMoveL(bplpt[0], (const u8*) gImageBpls + kImagePlaneSize * 0),
+			CopMoveL(bplpt[1], (const u8*) gImageBpls + kImagePlaneSize * 1),
+		};
+
+		CopCommand midwait1 = CopWait(4, 255);
+		CopCommand midwait2 = CopWait(4, 44 + 224);
+
+		CopCommand midbpl1mod = CopMove(bpl1mod, -kImagePitch * 3);
+		CopCommand midbpl2mod = CopMove(bpl2mod, -kImagePitch * 3);
+
+		CopCommand midcolors[1 << kImagePlanes] = {
+			CopMove(color[0], ~((const u16*) gPalettes)[0]),
+			CopMove(color[1], ~((const u16*) gPalettes)[1]),
+			CopMove(color[2], ~((const u16*) gPalettes)[2]),
+			CopMove(color[3], ~((const u16*) gPalettes)[3]),
+		};
+	}
+	image;
 
 	CopCommand end = CopEnd();
 };
@@ -161,29 +226,27 @@ bool Intro_Update()
 {
 	System_WaitVbl();
 
-	const u8* bpls = (const u8*) gImageBpls;
+	int scroll = (16384 - cos(sFrame << 9)) >> 8;
 
-	int scroll = (16384 - cos(sFrame << 9)) >> 9;
-	bpls += scroll * kImagePitch;
+	const u8* bpl0 = (const u8*) gImageBpls + scroll * kImagePitch;
+	const u8* bpl1 = bpl0 + kImagePlaneSize;
 
-	custom.bplpt[0] = (void*) (bpls + kImagePlaneSize * 0);
-	custom.bplpt[1] = (void*) (bpls + kImagePlaneSize * 1);
-
-	#if defined(TEST_COPLIST_CHANGES)
+	sCopList.image.bplpth[0].data = ((int) bpl0) >> 16;
+	sCopList.image.bplptl[0].data = ((int) bpl0) & 0xffff;
+	sCopList.image.bplpth[1].data = ((int) bpl1) >> 16;
+	sCopList.image.bplptl[1].data = ((int) bpl1) & 0xffff;
 
 	int palIndex = (sFrame >> 1) & (kPaletteCount - 1);
 	const u16* pal = &((const u16*) gPalettes)[palIndex * kPaletteSize];
 
-	sCopList.topcolor0.data = pal[0];
-	sCopList.topcolor1.data = pal[1];
-	sCopList.topcolor2.data = pal[2];
-	sCopList.topcolor3.data = pal[3];
-	sCopList.midcolor0.data = ~pal[0];
-	sCopList.midcolor1.data = ~pal[1];
-	sCopList.midcolor2.data = ~pal[2];
-	sCopList.midcolor3.data = ~pal[3];
-
-	#endif
+	sCopList.image.topcolors[0].data = pal[0];
+	sCopList.image.topcolors[1].data = pal[1];
+	sCopList.image.topcolors[2].data = pal[2];
+	sCopList.image.topcolors[3].data = pal[3];
+	sCopList.image.midcolors[0].data = ~pal[0];
+	sCopList.image.midcolors[1].data = ~pal[1];
+	sCopList.image.midcolors[2].data = ~pal[2];
+	sCopList.image.midcolors[3].data = ~pal[3];
 
 	sFrame++;
 
