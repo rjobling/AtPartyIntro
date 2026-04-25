@@ -133,7 +133,8 @@ ifdef WINDOWS
 	@rmdir /q /s obj
 	@rmdir /q /s out
 else
-	@$(RM) obj/* out/*
+	@$(RM) -r -d obj
+	@$(RM) -r -d out
 endif
 
 -include $(objects:.o=.d)
