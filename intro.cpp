@@ -42,6 +42,14 @@ static constexpr int kPaletteCount = 128;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+static constexpr int kBobsWidth		= 64;
+static constexpr int kBobsHeigh		= 64;
+static constexpr int kBobsPlanes	= 2;
+static constexpr int kBobsPlaneSize	= (kBobsWidth / 8) * kBobsHeight;
+static constexpr int kBobsPitch		= kBobsWidth / 8;
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 INCBIN(gFontBpls, "data/font_bpls.bin");
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -53,6 +61,12 @@ INCBIN(gLogoPal, "data/logo_pal.bin");
 ////////////////////////////////////////////////////////////////////////////////
 INCBIN_CHIP(gImageBpls, "data/image_bpls.bin");
 INCBIN(gPalettes, "data/palettes.bin");
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+INCBIN_CHIP(gBobsBpls, "data/bobs_bpls.bin");
+INCBIN(gBobsPal, "data/bobs_pal.bin");
+INCBIN_CHIP(gMasksBpls, "data/masks_bpls.bin");
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -177,8 +191,13 @@ bool Intro_Init()
 	custom.bpl2mod = 0;
 
 	debug_register_bitmap(gFontBpls, "FontBpls", Font_kBplWidth, Font_kBplHeight, Font_kBplPlanes, debug_resource_bitmap_interleaved);
+	debug_register_bitmap(gLogoBpls, "LogoBpls", kLogoWidth, kLogoHeight, kLogoPlanes, 0);
+	debug_register_palette(gLogoPal, "LogoPal", 1 << kLogoPlanes, 0);
 	debug_register_bitmap(gImageBpls, "ImageBpls", kImageWidth, kImageHeight, kImagePlanes, 0);
 	debug_register_palette(gPalettes, "Palette", kPaletteSize, 0);
+	debug_register_bitmap(gBobsBpls, "BobsBpls", kBobsWidth, kBobsHeight, kBobsPlanes, 0);
+	debug_register_palette(gBobsPal, "BobsPal", 1 << kBobsPlanes, 0);
+	debug_register_bitmap(gMasksBpls, "MasksBpls", kBobsWidth, kBobsHeight, 1, 0);
 
 	LSP_MusicDriver_CIA_Start(gLSPMusic, gLSPBank);
 	System_SetAudioFilter(false);
@@ -212,9 +231,14 @@ void Intro_Deinit()
 
 	LSP_MusicDriver_CIA_Stop();
 
+	debug_unregister(gFontBpls);
+	debug_unregister(gLogoBpls);
+	debug_unregister(gLogoPal);
 	debug_unregister(gImageBpls);
 	debug_unregister(gPalettes);
-	debug_unregister(gFontBpls);
+	debug_unregister(gBobsBpls);
+	debug_unregister(gBobsPal);
+	debug_unregister(gMasksBpls);
 
 	Palette_DeinitBlendTable();
 	Font_Deinit();

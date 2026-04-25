@@ -1,4 +1,4 @@
-- Add a logo
-- Add sprite sheet and  masks for blitting
-- Add blitter clearing and drawing code
 - Add double buffered screens
+- Add blitter clearing and drawing code
+*- Add bob sheet and  masks for blitting
+*- Add a logo
