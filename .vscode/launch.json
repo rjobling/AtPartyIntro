@@ -8,6 +8,7 @@
             "name": "AROS",
             "config": "A500",
             "program": "${workspaceFolder}/out/atpartyintro",
+            "uaelog": false,
             "internalConsoleOptions": "openOnSessionStart"
         },
         {
