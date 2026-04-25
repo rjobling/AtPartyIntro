@@ -43,7 +43,7 @@ static constexpr int kPaletteCount = 128;
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 static constexpr int kBobsWidth		= 64;
-static constexpr int kBobsHeigh		= 64;
+static constexpr int kBobsHeight	= 64;
 static constexpr int kBobsPlanes	= 2;
 static constexpr int kBobsPlaneSize	= (kBobsWidth / 8) * kBobsHeight;
 static constexpr int kBobsPitch		= kBobsWidth / 8;
