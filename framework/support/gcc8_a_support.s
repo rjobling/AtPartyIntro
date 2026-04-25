@@ -169,6 +169,7 @@ __umodsi3:
 	.section .text.KPutCharX,"ax",@progbits
 	.type KPutCharX, function
 	.globl	KPutCharX
+
 KPutCharX:
 	.cfi_startproc
 	move.l	a6, -(sp)
@@ -184,6 +185,7 @@ KPutCharX:
 	.section .text.PutChar,"ax",@progbits
 	.type PutChar, function
 	.globl	PutChar
+
 PutChar:
 	.cfi_startproc
 	move.b	d0, (a3)+

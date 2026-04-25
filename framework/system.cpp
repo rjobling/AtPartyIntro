@@ -46,15 +46,10 @@ static void* sVBR;
 ////////////////////////////////////////////////////////////////////////////////
 static bool sSavedWorkbench;
 static View* sSavedActiView;
+static ULONG sSavedCacheControl;
 static u16 sSavedADKCON;
 static u16 sSavedDMACON;
 static u16 sSavedINTENA;
-static u8 sSavedCIAAICR;
-static u8 sSavedCIAACRA;
-static u8 sSavedCIAACRB;
-static u8 sSavedCIABICR;
-static u8 sSavedCIABCRA;
-static u8 sSavedCIABCRB;
 static System_IrqFunc* sSavedIrq1Handler;
 static System_IrqFunc* sSavedIrq2Handler;
 static System_IrqFunc* sSavedIrq3Handler;
@@ -108,6 +103,11 @@ bool System_Init()
 
 	Forbid();
 
+	if (SysBase->LibNode.lib_Version >= 37)
+	{
+		sSavedCacheControl = CacheControl(0, 0xffffffff);
+	}
+
 	sSavedActiView = GfxBase->ActiView;
 
 	LoadView(nullptr);
@@ -115,6 +115,8 @@ bool System_Init()
 	WaitTOF();
 
 	Disable();
+
+	System_WaitVbl();
 
 	// Save current interrupt and DMA settings.
 	sSavedADKCON = custom.adkconr;
@@ -127,45 +129,29 @@ bool System_Init()
 	// Disable all DMA channels.
 	custom.dmacon = (u16) ~DMAF_SETCLR;
 
-	// Disable all CIA interrupts.
-	ciaa.ciaicr = (u8) ~CIAICRF_SETCLR;
-	ciab.ciaicr = (u8) ~CIAICRF_SETCLR;
-
-	// Save current CIA interrupts, which clears any pending.
-	sSavedCIAAICR = ciaa.ciaicr;
-	sSavedCIABICR = ciab.ciaicr;
-
-	// Save current CIA controls.
-	sSavedCIAACRA = ciaa.ciacra;
-	sSavedCIAACRB = ciaa.ciacrb;
-	sSavedCIABCRA = ciab.ciacra;
-	sSavedCIABCRB = ciab.ciacrb;
-
-	// Clear CIA Alarm count.
-	ciab.ciacrb = CIACRBF_ALARM;
-	ciab.ciatodhi = 0;
-	ciab.ciatodmid = 0;
-	ciab.ciatodlow = 0;
-
-	// Clear all CIA controls.
-	ciaa.ciacra = 0;
-	ciaa.ciacrb = 0;
-	ciab.ciacra = 0;
-	ciab.ciacrb = 0;
-
-	// Clear CIA TOD count.
-	ciab.ciatodhi = 0;
-	ciab.ciatodmid = 0;
-	ciab.ciatodlow = 0;
-
-	// Pause CIA TOD count.
-	ciab.ciatodhi = 0;
-
 	// Set all colors to black.
 	for (int i = 0; i < countof(custom.color); i++)
 	{
 		custom.color[i] = 0x000;
 	}
+
+	// Clear all sprite data.
+	custom.spr[0].dataa = 0;
+	custom.spr[0].datab = 0;
+	custom.spr[1].dataa = 0;
+	custom.spr[1].datab = 0;
+	custom.spr[2].dataa = 0;
+	custom.spr[2].datab = 0;
+	custom.spr[3].dataa = 0;
+	custom.spr[3].datab = 0;
+	custom.spr[4].dataa = 0;
+	custom.spr[4].datab = 0;
+	custom.spr[5].dataa = 0;
+	custom.spr[5].datab = 0;
+	custom.spr[6].dataa = 0;
+	custom.spr[6].datab = 0;
+	custom.spr[7].dataa = 0;
+	custom.spr[7].datab = 0;
 
 	System_WaitVbl();
 
@@ -194,18 +180,8 @@ void System_Deinit()
 	// Disable all DMA channels.
 	custom.dmacon = (u16) ~DMAF_SETCLR;
 
-	// Disable all CIA interrupts.
-	ciaa.ciaicr = (u8) ~CIAICRF_SETCLR;
-	ciab.ciaicr = (u8) ~CIAICRF_SETCLR;
-
 	// Clear all pending interrupts.
 	custom.intreq = (u16) ~INTF_SETCLR;
-
-	// Clear all pending CIA interrupts.
-	u8 pending;
-	pending = ciaa.ciaicr;
-	pending = ciab.ciaicr;
-	unused(pending);
 
 	// Restore interrupt handlers.
 	System_SetIrq1Handler(sSavedIrq1Handler);
@@ -223,28 +199,19 @@ void System_Deinit()
 	custom.dmacon = DMAF_SETCLR | sSavedDMACON;
 	custom.intena = INTF_SETCLR | sSavedINTENA;
 
-	// Restore CIA timer settings.
-	ciaa.ciacra = sSavedCIAACRA;
-	ciaa.ciacrb = sSavedCIAACRB;
-	ciab.ciacra = sSavedCIABCRA;
-	ciab.ciacrb = sSavedCIABCRB;
-
-	// Restore CIA interrupts.
-	ciaa.ciaicr = sSavedCIAAICR;
-	ciab.ciaicr = sSavedCIABICR;
-
-	// Enable CIAA interrupts for keyboard inputs.
-	ciaa.ciaicr = CIAICRF_SETCLR | CIAICRF_SP;
-
 	Enable();
 
 	LoadView(sSavedActiView);
 	WaitTOF();
 	WaitTOF();
 
+	if (sSavedCacheControl != 0)
+	{
+		CacheControl(sSavedCacheControl, 0xffffffff);
+	}
+
 	Permit();
 
-	WaitBlit();
 	DisownBlitter();
 
 	if (sSavedWorkbench)

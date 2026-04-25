@@ -10,9 +10,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 inline void LSP_MusicDriver_CIA_Start(const void* music, const void* bank)
 {
+	void* vbr = System_GetVBR();
+
 	register const void* _music	ASM("a0") = music;
 	register const void* _bank	ASM("a1") = bank;
-	register void*		 _vbr	ASM("a2") = System_GetVBR();
+	register void*		 _vbr	ASM("a2") = vbr;
 	register bool		 _ntsc	ASM("d0") = false;
 
 	asm volatile(
