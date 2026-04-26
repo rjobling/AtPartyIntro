@@ -51,7 +51,7 @@ static constexpr int kBobsPitch		= kBobsWidth / 8;
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 static constexpr int kBufferWidth	  = 320;
-static constexpr int kBufferHeight	  = 256;
+static constexpr int kBufferHeight	  = 176;
 static constexpr int kBufferPlanes	  = 2;
 static constexpr int kBufferPlaneSize = (kBufferWidth / 8) * kBufferHeight;
 static constexpr int kBufferPitch	  = kBufferWidth / 8;
@@ -97,16 +97,16 @@ struct CopList
 		CopCommand bpl2mod = CopMove(bpl2mod, 0);
 
 		CopCommand bplpth[kLogoPlanes] = {
-			CopMoveH(bplpt[0], (const u8*) gLogoBpls + kLogoPlaneSize * 0),
-			CopMoveH(bplpt[1], (const u8*) gLogoBpls + kLogoPlaneSize * 1),
-			CopMoveH(bplpt[2], (const u8*) gLogoBpls + kLogoPlaneSize * 2),
-			CopMoveH(bplpt[3], (const u8*) gLogoBpls + kLogoPlaneSize * 3),
+			CopMoveH(bplpt[0], (const u16*) gLogoBpls + kLogoPlaneSize / 2 * 0),
+			CopMoveH(bplpt[1], (const u16*) gLogoBpls + kLogoPlaneSize / 2 * 1),
+			CopMoveH(bplpt[2], (const u16*) gLogoBpls + kLogoPlaneSize / 2 * 2),
+			CopMoveH(bplpt[3], (const u16*) gLogoBpls + kLogoPlaneSize / 2 * 3),
 		};
 		CopCommand bplptl[kLogoPlanes] = {
-			CopMoveL(bplpt[0], (const u8*) gLogoBpls + kLogoPlaneSize * 0),
-			CopMoveL(bplpt[1], (const u8*) gLogoBpls + kLogoPlaneSize * 1),
-			CopMoveL(bplpt[2], (const u8*) gLogoBpls + kLogoPlaneSize * 2),
-			CopMoveL(bplpt[3], (const u8*) gLogoBpls + kLogoPlaneSize * 3),
+			CopMoveL(bplpt[0], (const u16*) gLogoBpls + kLogoPlaneSize / 2 * 0),
+			CopMoveL(bplpt[1], (const u16*) gLogoBpls + kLogoPlaneSize / 2 * 1),
+			CopMoveL(bplpt[2], (const u16*) gLogoBpls + kLogoPlaneSize / 2 * 2),
+			CopMoveL(bplpt[3], (const u16*) gLogoBpls + kLogoPlaneSize / 2 * 3),
 		};
 
 		CopCommand colors[1 << kLogoPlanes] = {
@@ -139,14 +139,14 @@ struct CopList
 		CopCommand bpl2mod = CopMove(bpl2mod, 0);
 
 		CopCommand bplpth[kImagePlanes + kBufferPlanes] = {
-			CopMoveH(bplpt[0], (const u8*) gImageBpls + kImagePlaneSize * 0),
-			CopMoveH(bplpt[1], (const u8*) gImageBpls + kImagePlaneSize * 1),
+			CopMoveH(bplpt[0], (const u16*) gImageBpls + kImagePlaneSize / 2 * 0),
+			CopMoveH(bplpt[1], (const u16*) gImageBpls + kImagePlaneSize / 2 * 1),
 			CopMoveH(bplpt[2], sBufferBpls[0] + kBufferPlaneSize / 2 * 0),
 			CopMoveH(bplpt[3], sBufferBpls[0] + kBufferPlaneSize / 2 * 1),
 		};
 		CopCommand bplptl[kImagePlanes + kBufferPlanes] = {
-			CopMoveL(bplpt[0], (const u8*) gImageBpls + kImagePlaneSize * 0),
-			CopMoveL(bplpt[1], (const u8*) gImageBpls + kImagePlaneSize * 1),
+			CopMoveL(bplpt[0], (const u16*) gImageBpls + kImagePlaneSize / 2 * 0),
+			CopMoveL(bplpt[1], (const u16*) gImageBpls + kImagePlaneSize / 2 * 1),
 			CopMoveL(bplpt[2], sBufferBpls[0] + kBufferPlaneSize / 2 * 0),
 			CopMoveL(bplpt[3], sBufferBpls[0] + kBufferPlaneSize / 2 * 1),
 		};
@@ -281,13 +281,20 @@ void Intro_Deinit()
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-static void BlitClear(u16* bufferBpls)
+static void BlitClear()
 {
-	custom.bltcon0 = DEST;
+	custom.bltcon0 = DEST | 0b00000000;
 	custom.bltcon1 = 0;
-	custom.bltdpt  = bufferBpls;
+	custom.bltdpt  = sBackBpls;
 	custom.bltdmod = 0;
 	custom.bltsize = (kBufferHeight << 6) + (kBufferWidth / 16);
+
+	System_WaitBlt();
+
+	custom.bltdpt  = sBackBpls + kBufferPlaneSize / 2;
+	custom.bltsize = (kBufferHeight << 6) + (kBufferWidth / 16);
+
+	System_WaitBlt();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -296,12 +303,10 @@ bool Intro_Update()
 {
 	System_WaitVbl();
 
-	BlitClear(sBackBpls);
-
 	int scroll = (16384 - cos(sFrame << 9)) >> 8;
 
-	const u8* imageBpl0 = (const u8*) gImageBpls + scroll * kImagePitch;
-	const u8* imageBpl1 = imageBpl0 + kImagePlaneSize;
+	const u16* imageBpl0 = (const u16*) gImageBpls + scroll * kImagePitch / 2;
+	const u16* imageBpl1 = imageBpl0 + kImagePlaneSize / 2;
 
 	sCopList.image.bplpth[0].data = ((int) imageBpl0) >> 16;
 	sCopList.image.bplptl[0].data = ((int) imageBpl0) & 0xffff;
@@ -333,18 +338,17 @@ bool Intro_Update()
 		sCopList.image.midcolors[i].data = ((sCopList.image.topcolors[i].data >> 1) & 0x770) | 0x00f;
 	}
 
-	u8* bufferBpl0 = (u8*) sFrontBpls;
-	u8* bufferBpl1 = bufferBpl0 + kBufferPlaneSize;
+	u16* bufferBpl0 = (u16*) sFrontBpls;
+	u16* bufferBpl1 = bufferBpl0 + kBufferPlaneSize / 2;
 
 	sCopList.image.bplpth[2].data = ((int) bufferBpl0) >> 16;
 	sCopList.image.bplptl[2].data = ((int) bufferBpl0) & 0xffff;
 	sCopList.image.bplpth[3].data = ((int) bufferBpl1) >> 16;
 	sCopList.image.bplptl[3].data = ((int) bufferBpl1) & 0xffff;
 
+	BlitClear();
+
 	Font_SetBpls(sBackBpls, sBackBpls + kBufferPlaneSize / 2);
-
-	System_WaitBlt();
-
 	Font_DrawMessage("Demo Lab!", 13, 7);
 	Font_DrawMessage("WPI 2026!", 17, 9);
 
