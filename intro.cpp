@@ -244,7 +244,7 @@ bool Intro_Init()
 	System_WaitVbl();
 
 	// Enable DMA which will start the copper.
-	custom.dmacon = DMAF_SETCLR | DMAF_MASTER | DMAF_RASTER | DMAF_COPPER;
+	custom.dmacon = DMAF_SETCLR | DMAF_MASTER | DMAF_RASTER | DMAF_COPPER | DMAF_BLITTER;
 
 	// Enable interrupts when still nearly at the top of the frame.
 	custom.intena = INTF_SETCLR | INTF_INTEN;
@@ -257,9 +257,10 @@ bool Intro_Init()
 void Intro_Deinit()
 {
 	System_WaitVbl();
+	System_WaitBlt();
 
 	// Disable DMA which will stop the copper.
-	custom.dmacon = DMAF_RASTER | DMAF_COPPER;
+	custom.dmacon = DMAF_RASTER | DMAF_COPPER | DMAF_BLITTER;
 
 	LSP_MusicDriver_CIA_Stop();
 
@@ -280,9 +281,22 @@ void Intro_Deinit()
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+static void BlitClear(u16* bufferBpls)
+{
+	custom.bltcon0 = DEST;
+	custom.bltcon1 = 0;
+	custom.bltdpt  = bufferBpls;
+	custom.bltdmod = 0;
+	custom.bltsize = (kBufferHeight << 6) + (kBufferWidth / 16);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 bool Intro_Update()
 {
 	System_WaitVbl();
+
+	BlitClear(sBackBpls);
 
 	int scroll = (16384 - cos(sFrame << 9)) >> 8;
 
@@ -328,6 +342,8 @@ bool Intro_Update()
 	sCopList.image.bplptl[3].data = ((int) bufferBpl1) & 0xffff;
 
 	Font_SetBpls(sBackBpls, sBackBpls + kBufferPlaneSize / 2);
+
+	System_WaitBlt();
 
 	Font_DrawMessage("Demo Lab!", 13, 7);
 	Font_DrawMessage("WPI 2026!", 17, 9);
