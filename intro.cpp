@@ -310,8 +310,8 @@ static void BlitBob(s16 x, s16 y)
 	custom.bltcon1 = shift;
 	custom.bltafwm = 0xffff;
 	custom.bltalwm = 0x0000;
-	custom.bltapt  = (u16*) gBobsBpls;
-	custom.bltbpt  = (u16*) gMasksBpls;
+	custom.bltapt  = (u16*) gMasksBpls;
+	custom.bltbpt  = (u16*) gBobsBpls;
 	custom.bltcpt  = bpls;
 	custom.bltdpt  = bpls;
 	custom.bltamod = (kBobsWidth - kBobSize) / 8 - 2;
@@ -324,8 +324,8 @@ static void BlitBob(s16 x, s16 y)
 
 	bpls += kBufferPlaneSize / 2;
 
-	custom.bltapt  = (u16*) gBobsBpls + kBobsPlaneSize / 2;
-	custom.bltbpt  = (u16*) gMasksBpls;
+	custom.bltapt  = (u16*) gMasksBpls;
+	custom.bltbpt  = (u16*) gBobsBpls + kBobsPlaneSize / 2;
 	custom.bltcpt  = bpls;
 	custom.bltdpt  = bpls;
 	custom.bltsize = (kBobSize << 6) + (kBobSize / 16) + 1;
@@ -490,8 +490,8 @@ bool Intro_Update()
 
 	for (int i = 0; i < 8; i++)
 	{
-		s16 x = cos((sFrame - (i << 4)) << 7) >> 7;
-		s16 y = sin((sFrame - (i << 3)) << 9) >> 8;
+		s16 x = cos((sFrame + (i << 3)) << 7) >> 7;
+		s16 y = sin((sFrame + (i << 2)) << 9) >> 8;
 		x += kBufferWidth  / 2 - kBobSize / 2;
 		y += kBufferHeight / 2 - kBobSize / 2;
 		BlitBob(x, y);
