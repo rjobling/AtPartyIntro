@@ -283,7 +283,7 @@ void Intro_Deinit()
 ////////////////////////////////////////////////////////////////////////////////
 static void BlitClear()
 {
-	custom.bltcon0 = DEST | 0b00000000;
+	custom.bltcon0 = DEST | 0x00;
 	custom.bltcon1 = 0;
 	custom.bltdpt  = sBackBpls;
 	custom.bltdmod = 0;
@@ -295,6 +295,98 @@ static void BlitClear()
 	custom.bltsize = (kBufferHeight << 6) + (kBufferWidth / 16);
 
 	System_WaitBlt();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+static void BlitLine(s16 x1, s16 y1, s16 x2, s16 y2, s16 color)
+{
+	assert(color > 0);
+
+	if (y1 > y2)
+	{
+		swap(x1, x2);
+		swap(y1, y2);
+	}
+
+	s16 dx = x2 - x1;
+	s16 dy = y2 - y1;
+
+	u16 code;
+
+	if (dx < 0)
+	{
+		dx = -dx;
+
+		if (dy > dx)
+		{
+			swap(dx, dy);
+			code = (2 << 2) | LINEMODE;
+		}
+		else
+		{
+			code = (5 << 2) | LINEMODE;
+		}
+	}
+	else
+	{
+		if (dy > dx)
+		{
+			swap(dx, dy);
+			code = (0 << 2) | LINEMODE;
+		}
+		else
+		{
+			code = (4 << 2) | LINEMODE;
+		}
+	}
+
+	s16 dx2 = dx + dx;
+	s16 dx4 = dx2 + dx2;
+	s16 dy4 = dy << 2;
+	s16 dy4_minus_dx4 = dy4 - dx4;
+	s32 dy4_minus_dx2 = dy4 - dx2;
+
+	u16 con0 = ((x1 & 15) << ASHIFTSHIFT) | SRCA | SRCC | DEST | 0x48;
+	u16 con1 = ((dy4_minus_dx2 < 0) ? SIGNFLAG : 0) | code;
+
+	u16* bpl = ((u16*) sBackBpls) + ((y1 << 5) + (y1 << 3) + (x1 >> 3)) / 2;
+
+	u16 size = ((dx + 1) << HSIZEBITS) | 2;
+
+	custom.bltadat = 0x8000;
+	custom.bltbdat = 0xffff;
+	custom.bltafwm = 0xffff;
+	custom.bltalwm = 0xffff;
+	custom.bltcmod = kBufferPitch;
+	custom.bltamod = dy4_minus_dx4;
+	custom.bltbmod = dy4;
+
+	if (color & 1)
+	{
+		custom.bltapt  = (void*) dy4_minus_dx2;
+		custom.bltcon0 = con0;
+		custom.bltcon1 = con1;
+		custom.bltcpt  = bpl;
+		custom.bltdpt  = bpl;
+		custom.bltsize = size;
+
+		System_WaitBlt();
+	}
+
+	if (color & 2)
+	{
+		bpl += kBufferPlaneSize / 2;
+
+		custom.bltapt  = (void*) dy4_minus_dx2;
+		custom.bltcon0 = con0;
+		custom.bltcon1 = con1;
+		custom.bltcpt  = bpl;
+		custom.bltdpt  = bpl;
+		custom.bltsize = size;
+
+		System_WaitBlt();
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -347,6 +439,10 @@ bool Intro_Update()
 	sCopList.image.bplptl[3].data = ((int) bufferBpl1) & 0xffff;
 
 	BlitClear();
+
+	s16 x = cos(sFrame << 9) >> 7;
+	s16 y = sin(sFrame << 9) >> 8;
+	BlitLine(kBufferWidth / 2 + x, kBufferHeight / 2 + y, kBufferWidth / 2 - x, kBufferHeight / 2 - y, 3);
 
 	Font_SetBpls(sBackBpls, sBackBpls + kBufferPlaneSize / 2);
 	Font_DrawMessage("Demo Lab!", 13, 7);
