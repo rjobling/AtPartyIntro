@@ -4,6 +4,8 @@
 
 #include "font.h"
 
+#define USE_MASKED_DRAW
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 static u8* sTextBpls[2];
@@ -68,6 +70,8 @@ void Font_DrawChar(u16 x, u16 y, char c)
 
 	for (int i = 0; i < Font_kHeight; i++)
 	{
+		#if defined(USE_MASKED_DRAW)
+
 		u8 bits1 = *bits++;
 		u8 bits2 = *bits++;
 
@@ -88,6 +92,21 @@ void Font_DrawChar(u16 x, u16 y, char c)
 
 		bpl1 += sTextPitch - 2;
 		bpl2 += sTextPitch - 2;
+
+		#else
+
+		*bpl1 = *bits;
+
+		bits += Font_kBplWidth / 8;
+
+		*bpl2 = *bits;
+
+		bits += Font_kBplWidth / 8;
+
+		bpl1 += sTextPitch;
+		bpl2 += sTextPitch;
+
+		#endif
 	}
 }
 

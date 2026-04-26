@@ -152,22 +152,22 @@ struct CopList
 		};
 
 		CopCommand topcolors[1 << (kImagePlanes + kBufferPlanes)] = {
-			CopMove(color[ 0], ((const u16*) gPalettes)[0]),
-			CopMove(color[ 1], ((const u16*) gPalettes)[1]),
-			CopMove(color[ 2], ((const u16*) gPalettes)[2]),
-			CopMove(color[ 3], ((const u16*) gPalettes)[3]),
-			CopMove(color[ 4], ((const u16*) gBobsPal)[1]),
-			CopMove(color[ 5], ((const u16*) gBobsPal)[1]),
-			CopMove(color[ 6], ((const u16*) gBobsPal)[1]),
-			CopMove(color[ 7], ((const u16*) gBobsPal)[1]),
-			CopMove(color[ 8], ((const u16*) gBobsPal)[2]),
-			CopMove(color[ 9], ((const u16*) gBobsPal)[2]),
-			CopMove(color[10], ((const u16*) gBobsPal)[2]),
-			CopMove(color[11], ((const u16*) gBobsPal)[2]),
-			CopMove(color[12], ((const u16*) gBobsPal)[3]),
-			CopMove(color[13], ((const u16*) gBobsPal)[3]),
-			CopMove(color[14], ((const u16*) gBobsPal)[3]),
-			CopMove(color[15], ((const u16*) gBobsPal)[3]),
+			CopMove(color[ 0], 0x000),
+			CopMove(color[ 1], 0x000),
+			CopMove(color[ 2], 0x000),
+			CopMove(color[ 3], 0x000),
+			CopMove(color[ 4], 0x000),
+			CopMove(color[ 5], 0x000),
+			CopMove(color[ 6], 0x000),
+			CopMove(color[ 7], 0x000),
+			CopMove(color[ 8], 0x000),
+			CopMove(color[ 9], 0x000),
+			CopMove(color[10], 0x000),
+			CopMove(color[11], 0x000),
+			CopMove(color[12], 0x000),
+			CopMove(color[13], 0x000),
+			CopMove(color[14], 0x000),
+			CopMove(color[15], 0x000),
 		};
 
 		CopCommand midwait1 = CopWait(4, 255);
@@ -177,10 +177,10 @@ struct CopList
 		CopCommand midbpl2mod = CopMove(bpl2mod, -kImagePitch * 3);
 
 		CopCommand midcolors[1 << kImagePlanes] = {
-			CopMove(color[0], ~((const u16*) gPalettes)[0]),
-			CopMove(color[1], ~((const u16*) gPalettes)[1]),
-			CopMove(color[2], ~((const u16*) gPalettes)[2]),
-			CopMove(color[3], ~((const u16*) gPalettes)[3]),
+			CopMove(color[0], 0x000),
+			CopMove(color[1], 0x000),
+			CopMove(color[2], 0x000),
+			CopMove(color[3], 0x000),
 		};
 	}
 	image;
@@ -297,14 +297,27 @@ bool Intro_Update()
 	int palIndex = (sFrame >> 1) & (kPaletteCount - 1);
 	const u16* pal = &((const u16*) gPalettes)[palIndex * kPaletteSize];
 
-	sCopList.image.topcolors[0].data = pal[0];
-	sCopList.image.topcolors[1].data = pal[1];
-	sCopList.image.topcolors[2].data = pal[2];
-	sCopList.image.topcolors[3].data = pal[3];
-	sCopList.image.midcolors[0].data = ((pal[0] >> 1) & 0x770) | 0x00f;
-	sCopList.image.midcolors[1].data = ((pal[1] >> 1) & 0x770) | 0x00f;
-	sCopList.image.midcolors[2].data = ((pal[2] >> 1) & 0x770) | 0x00f;
-	sCopList.image.midcolors[3].data = ((pal[3] >> 1) & 0x770) | 0x00f;
+	sCopList.image.topcolors[ 0].data = pal[0];
+	sCopList.image.topcolors[ 1].data = pal[1];
+	sCopList.image.topcolors[ 2].data = pal[2];
+	sCopList.image.topcolors[ 3].data = pal[3];
+	sCopList.image.topcolors[ 4].data = 0x000;
+	sCopList.image.topcolors[ 5].data = 0x000;
+	sCopList.image.topcolors[ 6].data = 0x000;
+	sCopList.image.topcolors[ 7].data = 0x000;
+	sCopList.image.topcolors[ 8].data = (pal[0] >> 1) & 0x777;
+	sCopList.image.topcolors[ 9].data = (pal[1] >> 1) & 0x777;
+	sCopList.image.topcolors[10].data = (pal[2] >> 1) & 0x777;
+	sCopList.image.topcolors[11].data = (pal[3] >> 1) & 0x777;
+	sCopList.image.topcolors[12].data = pal[0] | 0xf77;
+	sCopList.image.topcolors[13].data = pal[1] | 0xf77;
+	sCopList.image.topcolors[14].data = pal[2] | 0xf77;
+	sCopList.image.topcolors[15].data = pal[3] | 0xf77;
+
+	for (int i = 0; i < 4; i++)
+	{
+		sCopList.image.midcolors[i].data = ((sCopList.image.topcolors[i].data >> 1) & 0x770) | 0x00f;
+	}
 
 	u8* bufferBpl0 = (u8*) sFrontBpls;
 	u8* bufferBpl1 = bufferBpl0 + kBufferPlaneSize;
