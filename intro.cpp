@@ -485,8 +485,8 @@ bool Intro_Update()
 	BlitLine(x1, y1, x2, y2, 3);
 
 	Font_SetBpls(sBackBpls, sBackBpls + kBufferPlaneSize / 2);
-	Font_DrawMessage("Demo Lab!", 13, 7);
-	Font_DrawMessage("WPI 2026!", 17, 9);
+	Font_DrawMessage("RenderJam!", 15, 7);
+	Font_DrawMessage("WPI 2026", 16, 9);
 
 	for (int i = 0; i < 8; i++)
 	{
