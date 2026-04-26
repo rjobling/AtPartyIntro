@@ -47,6 +47,7 @@ static constexpr int kBobsHeight	= 64;
 static constexpr int kBobsPlanes	= 2;
 static constexpr int kBobsPlaneSize	= (kBobsWidth / 8) * kBobsHeight;
 static constexpr int kBobsPitch		= kBobsWidth / 8;
+static constexpr int kBobSize		= 16;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -299,6 +300,73 @@ static void BlitClear()
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+static void BlitBob(s16 x, s16 y)
+{
+	s16 minor = x & 15;
+	s16 major = x >> 4;
+
+	u16* bpls = sBackBpls + major / 2 + y * kBufferPitch / 2;
+
+	if (minor != 0)
+	{
+		s16 shift = minor << ASHIFTSHIFT;
+
+		custom.bltcon0 = shift | DEST | SRCA | SRCB | SRCC | 0xe2;
+		custom.bltcon1 = shift;
+		custom.bltafwm = 0xffff;
+		custom.bltalwm = 0x0000;
+		custom.bltapt  = (u16*) gBobsBpls;
+		custom.bltbpt  = (u16*) gMasksBpls;
+		custom.bltcpt  = bpls;
+		custom.bltdpt  = bpls;
+		custom.bltamod = (kBobsWidth - kBobSize) / 8 - 2;
+		custom.bltbmod = (kBobsWidth - kBobSize) / 8 - 2;
+		custom.bltcmod = (kBufferWidth - kBobSize) / 8 - 2;
+		custom.bltdmod = (kBufferWidth - kBobSize) / 8 - 2;
+		custom.bltsize = (kBobSize << 6) + (kBobSize / 16) + 1;
+
+		System_WaitBlt();
+
+		bpls += kBufferPlaneSize / 2;
+
+		custom.bltapt  = (u16*) gBobsBpls + kBobsPlaneSize / 2;
+		custom.bltbpt  = (u16*) gMasksBpls;
+		custom.bltcpt  = bpls;
+		custom.bltdpt  = bpls;
+		custom.bltsize = (kBobSize << 6) + (kBobSize / 16) + 1;
+	}
+	else
+	{
+		custom.bltcon0 = DEST | SRCA | SRCB | SRCC | 0xe2;
+		custom.bltcon1 = 0;
+		custom.bltafwm = 0xffff;
+		custom.bltafwm = 0xffff;
+		custom.bltapt  = (u16*) gBobsBpls;
+		custom.bltbpt  = (u16*) gMasksBpls;
+		custom.bltcpt  = bpls;
+		custom.bltdpt  = bpls;
+		custom.bltamod = (kBobsWidth - kBobSize) / 8;
+		custom.bltbmod = (kBobsWidth - kBobSize) / 8;
+		custom.bltcmod = (kBufferWidth - kBobSize) / 8;
+		custom.bltdmod = (kBufferWidth - kBobSize) / 8;
+		custom.bltsize = (kBobSize << 6) + (kBobSize / 16);
+
+		System_WaitBlt();
+
+		bpls += kBufferPlaneSize / 2;
+
+		custom.bltapt  = (u16*) gBobsBpls + kBobsPlaneSize / 2;
+		custom.bltbpt  = (u16*) gMasksBpls;
+		custom.bltcpt  = bpls;
+		custom.bltdpt  = bpls;
+		custom.bltsize = (kBobSize << 6) + (kBobSize / 16);
+	}
+
+	System_WaitBlt();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 static void BlitLine(s16 x1, s16 y1, s16 x2, s16 y2, s16 color)
 {
 	assert(color > 0);
@@ -440,13 +508,26 @@ bool Intro_Update()
 
 	BlitClear();
 
-	s16 x = cos(sFrame << 9) >> 7;
-	s16 y = sin(sFrame << 9) >> 8;
-	BlitLine(kBufferWidth / 2 + x, kBufferHeight / 2 + y, kBufferWidth / 2 - x, kBufferHeight / 2 - y, 3);
+	s16 x1 = cos(sFrame << 9) >> 7;
+	s16 y1 = sin(sFrame << 9) >> 8;
+	s16 x2 = kBufferWidth  / 2 - x1;
+	s16 y2 = kBufferHeight / 2 - y1;
+	x1 += kBufferWidth  / 2;
+	y1 += kBufferHeight / 2;
+	BlitLine(x1, y1, x2, y2, 3);
 
 	Font_SetBpls(sBackBpls, sBackBpls + kBufferPlaneSize / 2);
 	Font_DrawMessage("Demo Lab!", 13, 7);
 	Font_DrawMessage("WPI 2026!", 17, 9);
+
+	for (int i = 0; i < 1; i++)
+	{
+//		s16 x = cos((sFrame - (i << 4)) << 7) >> 7;
+//		s16 y = sin((sFrame - (i << 3)) << 9) >> 8;
+//		x += kBufferWidth  / 2 - kBobSize / 2;
+//		y += kBufferHeight / 2 - kBobSize / 2;
+		BlitBob(sFrame & 255, 76);
+	}
 
 	swap(sFrontBpls, sBackBpls);
 

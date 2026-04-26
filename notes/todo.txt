@@ -1,5 +1,6 @@
-- Add line blit code
-- Add double buffered screens
-- Add blitter clearing and drawing code
+- Add blitter bob code
+*- Add line blit code
+*- Add double buffered screens
+*- Add blitter clearing code
 *- Add bob sheet and  masks for blitting
 *- Add a logo
