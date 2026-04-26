@@ -8,3 +8,8 @@ Bit	A	B	C	D
 6	1	1	0	? ----. | | | | | |
 7	1	1	1	? --. | | | | | | |
 					| | | | | | | |
+					1 1 0 0 1 0 1 0
+
+A for reading the mask because this channel also has first and last word masks applied.
+B for reading the source pixels.
+C for reading the destination pixels.
