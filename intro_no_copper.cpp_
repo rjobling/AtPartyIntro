@@ -12,9 +12,9 @@
 #include "framework/lsp.h"
 #include "framework/system.h"
 
-//#define TEST_UPDATE
+#define TEST_UPDATE
 #if defined(TEST_UPDATE)
-//#define TEST_SCROLL
+#define TEST_SCROLL
 //#define TEST_PLOTS
 //#define TEST_PLANES
 #endif
@@ -38,8 +38,8 @@ INCBIN_CHIP(gImageBpls, "data/image_bpls.bin");
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-INCBIN(gLSPMusic, "data/statetrue.lsmusic");
-INCBIN_CHIP(gLSPBank, "data/statetrue.lsbank");
+INCBIN(gLSPMusic, "data/cosmic_makeup.lsmusic");
+INCBIN_CHIP(gLSPBank, "data/cosmic_makeup.lsbank");
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -127,7 +127,7 @@ bool Intro_Update()
 	#if defined(TEST_PLOTS)
 	for (int i = 0; i < 50; i++)
 	{
-		int index = rand(sSeed) % (kImagePlaneSize * kImagePlanes);
+		int index = rand(sSeed) % kImagePlaneSize;
 		int value = 1 << (rand(sSeed) & 7);
 		bpls[index] ^= value;
 	}
