@@ -336,9 +336,7 @@ void System_WaitBlt()
 	u16 test = custom.dmaconr; // For compatiblity with A1000.
 	unused(test);
 
-	debug_start_idle();
 	while (custom.dmaconr & DMAF_BLTDONE) {}
-	debug_stop_idle();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
